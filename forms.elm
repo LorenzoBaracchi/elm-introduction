@@ -2,7 +2,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onInput)
 
-import String exposing (length, any)
+import String exposing (length, any, join)
 import Char exposing (isUpper, isLower, isDigit)
 
 main =
@@ -35,7 +35,22 @@ update msg model =
       { model | password = password }
 
     PasswordAgain passwordAgain ->
-      { model | passwordAgain = passwordAgain}
+      { model | passwordAgain = passwordAgain }
+
+validateMatch : Model -> String
+validateMatch model =
+  if model.password /= model.passwordAgain then "Passwords do not match!" else ""
+
+validateLength : Model -> String
+validateLength model =
+  if length model.password < 8 then "Passwords must be at least 8 characters!" else ""
+
+validateCharacters : Model -> String
+validateCharacters model =
+  if any isUpper model.password && any isLower model.password && any isDigit model.password then
+    ""
+  else
+    "Passwords must contains uppercase, lowecase and numeric characters!"
 
 -- VIEW
 view : Model -> Html Msg
@@ -47,17 +62,17 @@ view model =
     , viewValidation model
     ]
 
+error : Model -> (String, String)
+error model =
+  if join "" [validateMatch model, validateLength model, validateCharacters model] /= "" then
+    ("red", join "" [validateMatch model, validateLength model, validateCharacters model])
+  else
+    ("green", "ok")
+
 viewValidation : Model -> Html msg
 viewValidation model =
   let
     (color, message) =
-      if model.password /= model.passwordAgain then
-        ("red", "Passwords do not match!")
-      else if length model.password < 8 then
-        ("red", "Passwords must be at least 8 characters!")
-      else if any isUpper model.password && any isLower model.password && any isDigit model.password then
-        ("red", "Passwords must contains uppercase, lowecase and numeric characters!")
-      else
-        ("green", "ok")
+      error model
   in
     div [style [("color", color)] ] [ text message ]
