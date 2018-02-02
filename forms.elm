@@ -13,17 +13,19 @@ type alias Model =
   { name : String
   , password : String
   , passwordAgain : String
+  , age : Int
   }
 
 model : Model
 model =
-  Model "" "" ""
+  Model "" "" "" 0
 
 -- UPDATE
 type Msg
     = Name String
     | Password String
     | PasswordAgain String
+    | Age String
 
 update : Msg -> Model -> Model
 update msg model =
@@ -36,6 +38,9 @@ update msg model =
 
     PasswordAgain passwordAgain ->
       { model | passwordAgain = passwordAgain }
+
+    Age age ->
+      { model | age = Result.withDefault -1 (String.toInt age) }
 
 validateMatch : Model -> String
 validateMatch model =
@@ -52,6 +57,10 @@ validateCharacters model =
   else
     "Passwords must contains uppercase, lowecase and numeric characters!"
 
+validateAge : Model -> String
+validateAge model =
+  if model.age < 0 then "Age must be a positive number" else ""
+
 -- VIEW
 view : Model -> Html Msg
 view model =
@@ -59,13 +68,14 @@ view model =
     [ input [ type_ "text", placeholder "Name", onInput Name ] []
     , input [ type_ "password", placeholder "Password", onInput Password ] []
     , input [ type_ "password", placeholder "Re-enter Password", onInput PasswordAgain ] []
+    , input [ type_ "number", placeholder "Age", onInput Age ] []
     , viewValidation model
     ]
 
 error : Model -> (String, String)
 error model =
-  if join "" [validateMatch model, validateLength model, validateCharacters model] /= "" then
-    ("red", join "" [validateMatch model, validateLength model, validateCharacters model])
+  if join "" [validateMatch model, validateLength model, validateCharacters model, validateAge model] /= "" then
+    ("red", join "" [validateMatch model, validateLength model, validateCharacters model, validateAge model])
   else
     ("green", "ok")
 
