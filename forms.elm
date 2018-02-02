@@ -1,8 +1,8 @@
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing (onInput)
+import Html.Events exposing (onInput, onClick)
 
-import String exposing (length, any, join)
+import String exposing (length, any, join, toInt)
 import Char exposing (isUpper, isLower, isDigit)
 
 main =
@@ -14,11 +14,12 @@ type alias Model =
   , password : String
   , passwordAgain : String
   , age : Int
+  , validity : String
   }
 
 model : Model
 model =
-  Model "" "" "" 0
+  Model "" "" "" -1 ""
 
 -- UPDATE
 type Msg
@@ -26,6 +27,7 @@ type Msg
     | Password String
     | PasswordAgain String
     | Age String
+    | CheckValidity
 
 update : Msg -> Model -> Model
 update msg model =
@@ -40,7 +42,13 @@ update msg model =
       { model | passwordAgain = passwordAgain }
 
     Age age ->
-      { model | age = Result.withDefault -1 (String.toInt age) }
+      { model | age = Result.withDefault -1 (toInt age) }
+
+    CheckValidity ->
+      if join "" [validateMatch model, validateLength model, validateCharacters model, validateAge model] /= "" then
+        { model | validity = join "" [validateMatch model, validateLength model, validateCharacters model, validateAge model] }
+      else
+        { model | validity = "ok" }
 
 validateMatch : Model -> String
 validateMatch model =
@@ -69,20 +77,16 @@ view model =
     , input [ type_ "password", placeholder "Password", onInput Password ] []
     , input [ type_ "password", placeholder "Re-enter Password", onInput PasswordAgain ] []
     , input [ type_ "number", placeholder "Age", onInput Age ] []
+    , button [ onClick CheckValidity ] [ text "Submit!"]
     , viewValidation model
     ]
 
-error : Model -> (String, String)
-error model =
-  if join "" [validateMatch model, validateLength model, validateCharacters model, validateAge model] /= "" then
-    ("red", join "" [validateMatch model, validateLength model, validateCharacters model, validateAge model])
-  else
-    ("green", "ok")
-
 viewValidation : Model -> Html msg
 viewValidation model =
-  let
-    (color, message) =
-      error model
-  in
-    div [style [("color", color)] ] [ text message ]
+  case model.validity of
+    "" ->
+      div [] []
+    "ok" ->
+      div [style [("color", "green")] ] [ text model.validity ]
+    _ ->
+      div [style [("color", "red")] ] [ text model.validity ]
